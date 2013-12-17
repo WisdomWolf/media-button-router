@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jameshartig.android.media_router;
+package com.harleensahni.android.mbr;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -34,17 +33,17 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 
-import com.jameshartig.android.media_router.receivers.MediaButtonReceiver;
+import com.harleensahni.android.mbr.receivers.MediaButtonReceiver;
 
 /**
  * Settings activity for Media Button Router. This is the activity that the user
  * will launch if they pick our app from their app launcher.
  * 
  * @author Harleen Sahni
- * @author James Hartig
  */
 public class MediaButtonConfigure extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 
+    private static final int TEXT_TO_SPEECH_CHECK_CODE = 123;
     private SharedPreferences preferences;
 
     /**
@@ -106,37 +105,19 @@ public class MediaButtonConfigure extends PreferenceActivity implements OnShared
             showAppCheckBoxPreferences.add(showReceiverPreference);
         }
 
-        final Activity thisActivity = this;
-        OnPreferenceClickListener showEULAListener = new Preference.OnPreferenceClickListener() {
+        Eula.show(this);
+        Utils.showIntroifNeccessary(this);
 
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Eula.show(thisActivity);
-                return true;
-            }
-        };
-
-        PreferenceCategory miscCategory = new PreferenceCategory(this);
-        miscCategory.setTitle(R.string.misc_header);
-        getPreferenceScreen().addPreference(miscCategory);
-        Preference showEULA = new Preference(this);
-        showEULA.setTitle(R.string.show_license_title);
-        showEULA.setPersistent(false);
-        showEULA.setOnPreferenceClickListener(showEULAListener);
-        miscCategory.addPreference(showEULA);
-
-        Preference aboutButton = new Preference(this);
-        aboutButton.setTitle(R.string.about);
-        aboutButton.setSummary(R.string.about_key);
-        aboutButton.setPersistent(false);
-        miscCategory.addPreference(aboutButton);
-
+        Intent checkIntent = new Intent();
+        checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkIntent, TEXT_TO_SPEECH_CHECK_CODE);
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         // Starts the media monitor service. Most of the time it should be
         // started on boot, but that's not true if the app has just been
         // installed.
+        // TODO check if enabled
         // TODO add listener to enable preference to start stop service
 
         if (Utils.isHandlingThroughSoleReceiver()) {
@@ -175,6 +156,35 @@ public class MediaButtonConfigure extends PreferenceActivity implements OnShared
             } else {
                 stopService(intent);
             }
+
         }
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == TEXT_TO_SPEECH_CHECK_CODE) {
+            Preference ttsWarningPreference = findPreference("tts_warning");
+
+            if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                ttsWarningPreference.setEnabled(false);
+            } else {
+                ttsWarningPreference.setEnabled(true);
+                ttsWarningPreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+
+                    public boolean onPreferenceClick(Preference preference) {
+                        Intent installIntent = new Intent();
+                        installIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                        startActivity(installIntent);
+                        return true;
+                    }
+                });
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

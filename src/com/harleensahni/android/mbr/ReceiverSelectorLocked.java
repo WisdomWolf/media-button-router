@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jameshartig.android.media_router;
+package com.harleensahni.android.mbr;
 
 import android.view.Menu;
 

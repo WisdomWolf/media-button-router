@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jameshartig.android.media_router.receivers;
+package com.harleensahni.android.mbr.receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,9 +22,9 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.jameshartig.android.media_router.Constants;
-import com.jameshartig.android.media_router.MediaButtonMonitorService;
-import com.jameshartig.android.media_router.Utils;
+import com.harleensahni.android.mbr.Constants;
+import com.harleensahni.android.mbr.MediaButtonMonitorService;
+import com.harleensahni.android.mbr.Utils;
 
 /**
  * Starts the media button monitor service on startup if media button router is enabled. 

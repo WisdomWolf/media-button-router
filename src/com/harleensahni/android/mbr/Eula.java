@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jameshartig.android.media_router;
+package com.harleensahni.android.mbr;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -37,6 +37,19 @@ import android.webkit.WebView;
  */
 class Eula {
     private static final String ASSET_EULA = "LICENSE.html";
+    private static final String PREFERENCE_EULA_ACCEPTED = "eula.accepted";
+    private static final String PREFERENCES_EULA = "eula";
+
+    /**
+     * callback to let the activity know when the user has accepted the EULA.
+     */
+    static interface OnEulaAgreedTo {
+
+        /**
+         * Called when the user has accepted the eula and the dialog closes.
+         */
+        void onEulaAgreedTo();
+    }
 
     /**
      * Displays the EULA if necessary. This method should be called from the
@@ -44,17 +57,49 @@ class Eula {
      * 
      * @param activity
      *            The Activity to finish if the user rejects the EULA.
+     * @return Whether the user has agreed already.
      */
-    static void show(final Activity activity) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(R.string.eula_title);
-        builder.setCancelable(true);
-        // builder.setMessage(readEula(activity));
-        WebView webView = new WebView(activity);
-        webView.loadUrl("file:///android_asset/LICENSE.html");
+    static boolean show(final Activity activity) {
+        final SharedPreferences preferences = activity.getSharedPreferences(PREFERENCES_EULA, Activity.MODE_PRIVATE);
+        if (!preferences.getBoolean(PREFERENCE_EULA_ACCEPTED, false)) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setTitle(R.string.eula_title);
+            builder.setCancelable(true);
+            builder.setPositiveButton(R.string.eula_accept, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    accept(preferences);
+                    if (activity instanceof OnEulaAgreedTo) {
+                        ((OnEulaAgreedTo) activity).onEulaAgreedTo();
+                    }
+                }
+            });
+            builder.setNegativeButton(R.string.eula_refuse, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    refuse(activity);
+                }
+            });
+            builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                public void onCancel(DialogInterface dialog) {
+                    refuse(activity);
+                }
+            });
+            // builder.setMessage(readEula(activity));
+            WebView webView = new WebView(activity);
+            webView.loadUrl("file:///android_asset/LICENSE.html");
 
-        builder.setView(webView);
-        builder.create().show();
+            builder.setView(webView);
+            builder.create().show();
+            return false;
+        }
+        return true;
+    }
+
+    private static void accept(SharedPreferences preferences) {
+        preferences.edit().putBoolean(PREFERENCE_EULA_ACCEPTED, true).commit();
+    }
+
+    private static void refuse(Activity activity) {
+        activity.finish();
     }
 
     private static CharSequence readEula(Activity activity) {

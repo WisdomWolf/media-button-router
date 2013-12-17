@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jameshartig.android.media_router;
+package com.harleensahni.android.mbr;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +30,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.text.Html;
@@ -64,22 +63,10 @@ public final class Utils {
      * @return
      */
     public static boolean isMediaButton(int keyCode) {
-        //handle special keys for newer devices
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && keyCode == KeyEvent.KEYCODE_MEDIA_AUDIO_TRACK) {
-            return true;
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1 && keyCode == KeyEvent.KEYCODE_MUSIC) {
-            return true;
-        }
-        return keyCode == KEYCODE_MEDIA_PLAY
-                || keyCode == KEYCODE_MEDIA_PAUSE
-                || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-                || keyCode == KeyEvent.KEYCODE_MEDIA_NEXT
-                || keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS
-                || keyCode == KeyEvent.KEYCODE_MEDIA_REWIND
-                || keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
-                || keyCode == KeyEvent.KEYCODE_HEADSETHOOK;
-        //not including KeyEvent.KEYCODE_MEDIA_STOP because if something sends stop, it should actually stop the music
-        //todo: make sure that stop doesn't cause random music apps to open
+        return keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD || keyCode == KeyEvent.KEYCODE_MEDIA_NEXT
+                || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS
+                || keyCode == KeyEvent.KEYCODE_MEDIA_REWIND || keyCode == KeyEvent.KEYCODE_MEDIA_STOP
+                || keyCode == KEYCODE_MEDIA_PLAY || keyCode == KEYCODE_MEDIA_PAUSE;
     }
 
     /**
@@ -186,6 +173,34 @@ public final class Utils {
      */
     public static String getAppName(ResolveInfo resolveInfo, PackageManager packageManager) {
         return resolveInfo.activityInfo.applicationInfo.loadLabel(packageManager).toString();
+    }
+
+    public static AlertDialog showIntroifNeccessary(Context context) {
+        final SharedPreferences preferenceManager = PreferenceManager.getDefaultSharedPreferences(context);
+        if (!preferenceManager.getBoolean(Constants.INTRO_SHOWN_KEY, false)) {
+            // TextView textview = new TextView(context);
+            // textview.setText(context.getText(R.string.intro_text));
+            Spanned s = Html.fromHtml(context.getString(R.string.intro_text));
+            Builder alertDialog = new AlertDialog.Builder(context).setTitle("Introduction").setMessage(s);
+            alertDialog.setOnCancelListener(new OnCancelListener() {
+                public void onCancel(DialogInterface dialog) {
+                    // preferenceManager.edit().putBoolean(Constants.INTRO_SHOWN_KEY,
+                    // true);
+                    Log.d(TAG, "Intro cancelled. will show again.");
+                }
+            });
+            alertDialog.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+
+                public void onClick(DialogInterface dialog, int which) {
+
+                    preferenceManager.edit().putBoolean(Constants.INTRO_SHOWN_KEY, true).commit();
+
+                    Log.d(TAG, "Intro closed. Will not show again.");
+                }
+            });
+            return alertDialog.show();
+        }
+        return null;
     }
 
     public static int getAdjustedKeyCode(KeyEvent keyEvent) {

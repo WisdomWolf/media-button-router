@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jameshartig.android.media_router;
+package com.harleensahni.android.mbr;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -29,7 +29,7 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 
-import com.jameshartig.android.media_router.receivers.MediaButtonReceiver;
+import com.harleensahni.android.mbr.receivers.MediaButtonReceiver;
 
 /**
  * Monitors when the media button receiver registered with the audio manager changes, and sets 
@@ -37,7 +37,6 @@ import com.jameshartig.android.media_router.receivers.MediaButtonReceiver;
  * all media button presses.
  * 
  * @author Peter Haight
- * @author James Hartig
  */
  public class MediaButtonMonitorService extends Service {
     public static final String TAG = "MediaButtonMonitorService";
@@ -59,11 +58,15 @@ import com.jameshartig.android.media_router.receivers.MediaButtonReceiver;
         }
 
         public void onChange(boolean selfChange) {
+            Log.d("SettingsObserver", "onChange(" + selfChange + ")");
             String receiverName = Settings.System.getString(mContentResolver, MEDIA_BUTTON_RECEIVER);
+            Log.d("SettingsObserver", "MEDIA_BUTTON_RECEIVER changed to " + receiverName);
+            Log.d("SettingsObserver", "'" + receiverName + "' == '" + mMonitorService.mComponentName.flattenToString()
+                    + "'");
             if (!selfChange
                     && !receiverName.equals(mMonitorService.mComponentName.flattenToString())
                     && !receiverName
-                            .equals("com.jameshartig.android.media_router/com.jameshartig.android.media_router.ReceiverSelector$1")) {
+                            .equals("com.harleensahni.android.mbr/com.harleensahni.android.mbr.ReceiverSelector$1")) {
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mMonitorService
                         .getApplicationContext());
                 preferences.edit().putString(Constants.LAST_MEDIA_BUTTON_RECEIVER, receiverName).commit();
